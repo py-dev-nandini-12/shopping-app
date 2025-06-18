@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { ProductGrid } from '@/components/product/product-grid';
 
 interface ProductPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await fetchProductById(params.id);
+  const resolvedParams = await params;
+  const product = await fetchProductById(resolvedParams.id);
   
   if (!product) {
     notFound();

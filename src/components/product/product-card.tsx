@@ -14,7 +14,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  const { dispatch: cartDispatch } = useCart();
+  const { addToCartOptimistic } = useCart();
   const { dispatch: wishlistDispatch, isInWishlist } = useWishlist();
   const [isHovered, setIsHovered] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -31,15 +31,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     
     setIsAddingToCart(true);
     
-    cartDispatch({
-      type: 'ADD_TO_CART',
-      payload: {
-        product,
-        quantity: 1,
-        size: product.sizes[0],
-        color: product.colors[0]
-      }
-    });
+    // Use React 19 optimistic update
+    addToCartOptimistic(product, 1, product.sizes?.[0], product.colors?.[0]);
     
     setTimeout(() => {
       setIsAddingToCart(false);

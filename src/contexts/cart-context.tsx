@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useReducer, ReactNode, useEffect, useState } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect, useState, useOptimistic, startTransition, useCallback } from 'react';
 import { Product } from '@/types/product';
 import { useAuth } from '@/contexts/auth-context';
 
@@ -27,7 +27,12 @@ type CartAction =
 
 const CartContext = createContext<{
   state: CartState;
+  optimisticState: CartState;
   dispatch: React.Dispatch<CartAction>;
+  addToCartOptimistic: (product: Product, quantity?: number, size?: string, color?: string) => void;
+  removeFromCartOptimistic: (id: string) => void;
+  updateQuantityOptimistic: (id: string, quantity: number) => void;
+  clearCartOptimistic: () => void;
 } | null>(null);
 
 function cartReducer(state: CartState, action: CartAction): CartState {
@@ -105,15 +110,51 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // React 19 useOptimistic for immediate UI feedback
+  const [optimisticState, setOptimisticState] = useOptimistic(
+    state,
+    (currentState: CartState, action: CartAction) => cartReducer(currentState, action)
+  );
+
+  // Optimistic action helpers using startTransition
+  const addToCartOptimistic = useCallback((product: Product, quantity = 1, size?: string, color?: string) => {
+    startTransition(() => {
+      setOptimisticState({ type: 'ADD_TO_CART', payload: { product, quantity, size, color } });
+    });
+    // Also dispatch the real action
+    dispatch({ type: 'ADD_TO_CART', payload: { product, quantity, size, color } });
+  }, [setOptimisticState]);
+
+  const removeFromCartOptimistic = useCallback((id: string) => {
+    startTransition(() => {
+      setOptimisticState({ type: 'REMOVE_FROM_CART', payload: { id } });
+    });
+    dispatch({ type: 'REMOVE_FROM_CART', payload: { id } });
+  }, [setOptimisticState]);
+
+  const updateQuantityOptimistic = useCallback((id: string, quantity: number) => {
+    startTransition(() => {
+      setOptimisticState({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
+    });
+    dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
+  }, [setOptimisticState]);
+
+  const clearCartOptimistic = useCallback(() => {
+    startTransition(() => {
+      setOptimisticState({ type: 'CLEAR_CART' });
+    });
+    dispatch({ type: 'CLEAR_CART' });
+  }, [setOptimisticState]);
+
   // Listen for logout events to immediately clear cart
   useEffect(() => {
     const handleLogout = () => {
-      dispatch({ type: 'CLEAR_CART' });
+      clearCartOptimistic();
     };
 
     window.addEventListener('userLogout', handleLogout);
     return () => window.removeEventListener('userLogout', handleLogout);
-  }, []);
+  }, [clearCartOptimistic]);
 
   // Load cart from localStorage when user changes
   useEffect(() => {
@@ -160,7 +201,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [state, user, isInitialized]);
 
   return (
-    <CartContext.Provider value={{ state, dispatch }}>
+    <CartContext.Provider value={{ 
+      state, 
+      optimisticState,
+      dispatch,
+      addToCartOptimistic,
+      removeFromCartOptimistic,
+      updateQuantityOptimistic,
+      clearCartOptimistic
+    }}>
       {children}
     </CartContext.Provider>
   );

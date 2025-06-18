@@ -7,24 +7,18 @@ import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/contexts/cart-context";
 
 export default function CartPage() {
-  const { state: cartState, dispatch } = useCart();
+  const { optimisticState: cartState, updateQuantityOptimistic, removeFromCartOptimistic, clearCartOptimistic } = useCart();
 
   const handleUpdateQuantity = (id: string, newQuantity: number) => {
-    dispatch({
-      type: 'UPDATE_QUANTITY',
-      payload: { id, quantity: newQuantity }
-    });
+    updateQuantityOptimistic(id, newQuantity);
   };
 
   const handleRemoveItem = (id: string) => {
-    dispatch({
-      type: 'REMOVE_FROM_CART',
-      payload: { id }
-    });
+    removeFromCartOptimistic(id);
   };
 
   const handleClearCart = () => {
-    dispatch({ type: 'CLEAR_CART' });
+    clearCartOptimistic();
   };
 
   const subtotal = cartState.total;

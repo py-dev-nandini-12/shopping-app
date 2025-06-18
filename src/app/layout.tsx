@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/header";
 import { CartProvider } from "@/contexts/cart-context";
 import { WishlistProvider } from "@/contexts/wishlist-context";
 import { AuthProvider } from "@/contexts/auth-context";
-import { OrderProvider } from "@/contexts/order-context";
+import { OrderProvider } from "@/contexts/order-context-optimized";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",

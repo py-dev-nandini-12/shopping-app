@@ -13,7 +13,7 @@ import { useState } from 'react';
 
 export const Header = () => {
   const router = useRouter();
-  const { state: cartState } = useCart();
+  const { optimisticState: cartState } = useCart();
   const { state: wishlistState } = useWishlist();
   const { user, isLoading } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);

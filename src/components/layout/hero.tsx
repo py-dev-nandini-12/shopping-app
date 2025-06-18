@@ -49,13 +49,13 @@ export function Hero() {
                 <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link href="/products?featured=true">
+            <Link href="/react19-demo">
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-2 border-cyan-400/60 text-gray-800 hover:bg-cyan-100/50 backdrop-blur-xl px-10 py-4 text-lg font-bold transition-all duration-300 rounded-xl shadow-xl"
+                className="border-2 border-purple-400/60 text-gray-800 hover:bg-purple-100/50 backdrop-blur-xl px-10 py-4 text-lg font-bold transition-all duration-300 rounded-xl shadow-xl"
               >
-                Featured Items
+                🚀 React 19 Demo
               </Button>
             </Link>
           </div>

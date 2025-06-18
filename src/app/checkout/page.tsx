@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useCart } from "@/contexts/cart-context";
-import { useOrders } from "@/contexts/order-context";
+import { useOrders } from "@/contexts/order-context-optimized";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +41,7 @@ export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
-  const [completedOrderId, setCompletedOrderId] = useState<string>('');
+  const [completedOrderId, setCompletedOrderId] = useState<string>("");
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -120,30 +120,32 @@ export default function CheckoutPage() {
 
     // Create order record
     if (user) {
-      const orderId = addOrder({
+      const orderId = await addOrder({
         userId: user.id.toString(),
-        items: state.items.map(item => ({
+        items: state.items.map((item) => ({
           id: item.id,
           product: item.product,
           quantity: item.quantity,
           size: item.size,
           color: item.color,
-          price: item.product.price
+          price: item.product.price,
         })),
         total: state.total,
-        status: 'confirmed',
+        status: "pending",
         shippingAddress: {
           firstName: formData.firstName,
           lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
           address: formData.address,
           city: formData.city,
           state: formData.state,
           zipCode: formData.zipCode,
         },
         paymentMethod: {
-          type: 'credit',
-          last4: formData.cardNumber.slice(-4)
-        }
+          type: "credit",
+          last4: formData.cardNumber.slice(-4),
+        },
       });
       setCompletedOrderId(orderId);
     }
@@ -172,7 +174,10 @@ export default function CheckoutPage() {
             </p>
             {completedOrderId && (
               <p className="text-sm text-gray-600 mb-2">
-                Order ID: <span className="font-mono text-indigo-600">{completedOrderId}</span>
+                Order ID:{" "}
+                <span className="font-mono text-indigo-600">
+                  {completedOrderId}
+                </span>
               </p>
             )}
             <p className="text-sm text-gray-500 mb-8">
