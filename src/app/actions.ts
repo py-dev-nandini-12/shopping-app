@@ -59,26 +59,41 @@ function mapDummyProductToProduct(dummyProduct: DummyProduct): Product {
 // Map DummyJSON categories to our category system
 function mapDummyCategory(dummyCategory: string): string {
   const categoryMap: Record<string, string> = {
+    // Electronics & Tech
     smartphones: "accessories",
     laptops: "accessories",
+    tablets: "accessories",
+    "mobile-accessories": "accessories",
+    
+    // Beauty & Personal Care
+    beauty: "accessories",
     fragrances: "accessories",
-    skincare: "accessories",
-    groceries: "accessories",
-    "home-decoration": "accessories",
+    "skin-care": "accessories",
+    
+    // Home & Living
     furniture: "accessories",
+    "home-decoration": "accessories",
+    "kitchen-accessories": "accessories",
+    groceries: "accessories",
+    
+    // Women's Clothing & Accessories
     tops: "womens-clothing",
     "womens-dresses": "womens-clothing",
     "womens-shoes": "shoes",
+    "womens-bags": "accessories",
+    "womens-jewellery": "accessories",
+    "womens-watches": "accessories",
+    
+    // Men's Clothing & Accessories
     "mens-shirts": "mens-clothing",
     "mens-shoes": "shoes",
     "mens-watches": "accessories",
-    "womens-watches": "accessories",
-    "womens-bags": "accessories",
-    "womens-jewellery": "accessories",
+    
+    // Sports & Lifestyle
+    "sports-accessories": "accessories",
     sunglasses: "accessories",
-    automotive: "accessories",
     motorcycle: "accessories",
-    lighting: "accessories",
+    vehicle: "accessories",
   };
 
   return categoryMap[dummyCategory] || "accessories";
@@ -135,7 +150,8 @@ function generateTagsFromCategory(category: string): string[] {
 // Server action to fetch all products
 export async function fetchProducts(): Promise<Product[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/products?limit=100`, {
+    // Fetch more products to ensure we get a good variety
+    const response = await fetch(`${API_BASE_URL}/products?limit=0`, {
       cache: "force-cache",
       next: { revalidate: 3600 }, // Cache for 1 hour
     });
@@ -193,13 +209,62 @@ export async function fetchProductsByCategory(
   category: string
 ): Promise<Product[]> {
   try {
-    // Get all products and filter by our category system
+    // First, get all products to ensure we have a good sample
     const allProducts = await fetchProducts();
-    return allProducts.filter((product) => product.category === category);
+    const filteredProducts = allProducts.filter((product) => product.category === category);
+    
+    // If we don't have enough products, try fetching from specific DummyJSON categories
+    if (filteredProducts.length < 5) {
+      const dummyCategoriesToFetch = getDummyCategoriesForOurCategory(category);
+      const additionalProducts: Product[] = [];
+      
+      for (const dummyCategory of dummyCategoriesToFetch) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/products/category/${dummyCategory}`, {
+            cache: "force-cache",
+            next: { revalidate: 3600 },
+          });
+          
+          if (response.ok) {
+            const data: DummyProductsResponse = await response.json();
+            const mappedProducts = data.products.map(mapDummyProductToProduct);
+            additionalProducts.push(...mappedProducts);
+          }
+        } catch (error) {
+          console.error(`Error fetching category ${dummyCategory}:`, error);
+        }
+      }
+      
+      // Combine and deduplicate
+      const allProductsMap = new Map();
+      [...filteredProducts, ...additionalProducts].forEach(product => {
+        allProductsMap.set(product.id, product);
+      });
+      
+      return Array.from(allProductsMap.values()).filter(product => product.category === category);
+    }
+    
+    return filteredProducts;
   } catch (error) {
     console.error(`Error fetching products for category ${category}:`, error);
     return [];
   }
+}
+
+// Helper function to get DummyJSON categories for our category system
+function getDummyCategoriesForOurCategory(ourCategory: string): string[] {
+  const categoryMap: Record<string, string[]> = {
+    'womens-clothing': ['tops', 'womens-dresses'],
+    'mens-clothing': ['mens-shirts'],
+    'shoes': ['mens-shoes', 'womens-shoes'],
+    'accessories': [
+      'beauty', 'fragrances', 'skin-care', 'womens-bags', 'womens-jewellery', 
+      'womens-watches', 'mens-watches', 'sunglasses', 'smartphones', 'laptops',
+      'tablets', 'mobile-accessories', 'sports-accessories'
+    ]
+  };
+  
+  return categoryMap[ourCategory] || [];
 }
 
 // Server action to fetch categories
@@ -214,7 +279,7 @@ export async function fetchCategories(): Promise<Category[]> {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const _dummyCategories: string[] = await response.json();
+    await response.json();
 
     // Create our standard categories
     const standardCategories: Category[] = [

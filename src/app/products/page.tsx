@@ -1,5 +1,5 @@
 import { ProductGrid } from "@/components/product/product-grid";
-import { fetchProducts, fetchProductsByCategory } from "@/app/actions";
+import { fetchProducts, fetchProductsByCategory, searchProducts } from "@/app/actions";
 import { Suspense } from "react";
 
 interface ProductsPageProps {
@@ -21,9 +21,14 @@ async function ProductsContent({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
   
   // Fetch products based on search params
-  const products = params.category 
-    ? await fetchProductsByCategory(params.category)
-    : await fetchProducts();
+  let products;
+  if (params.search) {
+    products = await searchProducts(params.search);
+  } else if (params.category) {
+    products = await fetchProductsByCategory(params.category);
+  } else {
+    products = await fetchProducts();
+  }
 
   const categoryNames: Record<string, string> = {
     'mens-clothing': "Men's Clothing",
@@ -36,13 +41,18 @@ async function ProductsContent({ searchParams }: ProductsPageProps) {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          {params.category 
-            ? categoryNames[params.category] || 'Products'
-            : 'All Products'
+          {params.search 
+            ? `Search Results for "${params.search}"`
+            : params.category 
+              ? categoryNames[params.category] || 'Products'
+              : 'All Products'
           }
         </h1>
         <p className="text-gray-600 text-lg">
-          Discover our complete collection of premium fashion items.
+          {params.search 
+            ? `Found ${products.length} products matching your search.`
+            : 'Discover our complete collection of premium fashion items.'
+          }
         </p>
       </div>
 
