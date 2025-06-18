@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useCart } from "@/contexts/cart-context";
+import { useOrders } from "@/contexts/order-context";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -34,9 +36,12 @@ interface FormData {
 
 export default function CheckoutPage() {
   const { state, dispatch } = useCart();
+  const { addOrder } = useOrders();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [completedOrderId, setCompletedOrderId] = useState<string>('');
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -113,6 +118,36 @@ export default function CheckoutPage() {
     // Simulate payment processing
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
+    // Create order record
+    if (user) {
+      const orderId = addOrder({
+        userId: user.id.toString(),
+        items: state.items.map(item => ({
+          id: item.id,
+          product: item.product,
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+          price: item.product.price
+        })),
+        total: state.total,
+        status: 'confirmed',
+        shippingAddress: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+        },
+        paymentMethod: {
+          type: 'credit',
+          last4: formData.cardNumber.slice(-4)
+        }
+      });
+      setCompletedOrderId(orderId);
+    }
+
     // Clear cart after successful payment
     dispatch({ type: "CLEAR_CART" });
 
@@ -135,18 +170,33 @@ export default function CheckoutPage() {
             <p className="text-gray-600 mb-2">
               Thank you for your purchase, {formData.firstName}!
             </p>
+            {completedOrderId && (
+              <p className="text-sm text-gray-600 mb-2">
+                Order ID: <span className="font-mono text-indigo-600">{completedOrderId}</span>
+              </p>
+            )}
             <p className="text-sm text-gray-500 mb-8">
               We&apos;ll send a confirmation email to {formData.email} shortly.
             </p>
 
             <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-gray-600">Order Total:</span>
                 <span className="font-bold text-lg">${total.toFixed(2)}</span>
               </div>
+              {completedOrderId && (
+                <div className="text-xs text-gray-500">
+                  Your order has been saved to your order history.
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">
+              <Link href="/orders">
+                <Button className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
+                  View Order History
+                </Button>
+              </Link>
               <Link href="/products">
                 <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
                   Continue Shopping
