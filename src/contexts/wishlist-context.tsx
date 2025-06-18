@@ -1,7 +1,8 @@
 'use client'
 
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
 import { Product } from '@/types/product';
+import { useAuth } from '@/contexts/auth-context';
 
 interface WishlistState {
   items: Product[];
@@ -10,7 +11,8 @@ interface WishlistState {
 type WishlistAction =
   | { type: 'ADD_TO_WISHLIST'; payload: Product }
   | { type: 'REMOVE_FROM_WISHLIST'; payload: { id: string } }
-  | { type: 'CLEAR_WISHLIST' };
+  | { type: 'CLEAR_WISHLIST' }
+  | { type: 'LOAD_WISHLIST'; payload: WishlistState };
 
 const WishlistContext = createContext<{
   state: WishlistState;
@@ -35,15 +37,61 @@ function wishlistReducer(state: WishlistState, action: WishlistAction): Wishlist
     case 'CLEAR_WISHLIST':
       return { items: [] };
 
+    case 'LOAD_WISHLIST':
+      return action.payload;
+
     default:
       return state;
   }
 }
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [state, dispatch] = useReducer(wishlistReducer, {
     items: []
   });
+
+  // Load wishlist from localStorage when user changes
+  useEffect(() => {
+    const loadWishlist = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          const storageKey = user ? `wishlist_${user.id}` : 'wishlist_guest';
+          const savedWishlist = localStorage.getItem(storageKey);
+          if (savedWishlist) {
+            const wishlistData = JSON.parse(savedWishlist);
+            dispatch({ type: 'LOAD_WISHLIST', payload: wishlistData });
+          } else {
+            // Clear wishlist if no data for this user
+            dispatch({ type: 'CLEAR_WISHLIST' });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading wishlist:', error);
+      }
+    };
+
+    loadWishlist();
+  }, [user]);
+
+  // Save wishlist to localStorage whenever state changes
+  useEffect(() => {
+    const saveWishlist = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          const storageKey = user ? `wishlist_${user.id}` : 'wishlist_guest';
+          localStorage.setItem(storageKey, JSON.stringify(state));
+        }
+      } catch (error) {
+        console.error('Error saving wishlist:', error);
+      }
+    };
+
+    // Only save if wishlist has been initialized
+    if (state.items.length > 0) {
+      saveWishlist();
+    }
+  }, [state, user]);
 
   const isInWishlist = (id: string) => {
     return state.items.some(item => item.id === id);

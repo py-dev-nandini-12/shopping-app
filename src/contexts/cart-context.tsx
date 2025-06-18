@@ -1,7 +1,8 @@
 'use client'
 
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect, useState } from 'react';
 import { Product } from '@/types/product';
+import { useAuth } from '@/contexts/auth-context';
 
 export interface CartItem {
   id: string;
@@ -21,7 +22,8 @@ type CartAction =
   | { type: 'ADD_TO_CART'; payload: { product: Product; quantity?: number; size?: string; color?: string } }
   | { type: 'REMOVE_FROM_CART'; payload: { id: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
-  | { type: 'CLEAR_CART' };
+  | { type: 'CLEAR_CART' }
+  | { type: 'LOAD_CART'; payload: CartState };
 
 const CartContext = createContext<{
   state: CartState;
@@ -86,17 +88,66 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     case 'CLEAR_CART':
       return { items: [], total: 0, itemCount: 0 };
 
+    case 'LOAD_CART':
+      return action.payload;
+
     default:
       return state;
   }
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
     total: 0,
     itemCount: 0
   });
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load cart from localStorage when user changes
+  useEffect(() => {
+    const loadCart = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          const storageKey = user ? `cart_${user.id}` : 'cart_guest';
+          const savedCart = localStorage.getItem(storageKey);
+          if (savedCart) {
+            const cartData = JSON.parse(savedCart);
+            dispatch({ type: 'LOAD_CART', payload: cartData });
+          } else {
+            // Clear cart if no data for this user
+            dispatch({ type: 'CLEAR_CART' });
+          }
+          setIsInitialized(true);
+        }
+      } catch (error) {
+        console.error('Error loading cart:', error);
+        setIsInitialized(true);
+      }
+    };
+
+    loadCart();
+  }, [user]);
+
+  // Save cart to localStorage whenever state changes (after initialization)
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const saveCart = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          const storageKey = user ? `cart_${user.id}` : 'cart_guest';
+          localStorage.setItem(storageKey, JSON.stringify(state));
+        }
+      } catch (error) {
+        console.error('Error saving cart:', error);
+      }
+    };
+
+    // Save cart state including when it's empty (after clearing)
+    saveCart();
+  }, [state, user, isInitialized]);
 
   return (
     <CartContext.Provider value={{ state, dispatch }}>
