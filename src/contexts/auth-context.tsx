@@ -191,7 +191,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     
+    // Clear user-specific data (cart, wishlist, orders) by setting empty states
+    if (state.user) {
+      // Clear user-specific cart and wishlist
+      localStorage.removeItem(`cart_${state.user.id}`);
+      localStorage.removeItem(`wishlist_${state.user.id}`);
+      localStorage.removeItem(`orders_${state.user.id}`);
+    }
+    
+    // Also clear guest data to ensure clean state
+    localStorage.removeItem('cart_guest');
+    localStorage.removeItem('wishlist_guest');
+    localStorage.removeItem('orders_guest');
+    
     dispatch({ type: 'LOGOUT' });
+    
+    // Trigger a custom event to force contexts to reload
+    console.log('Dispatching userLogout event');
+    window.dispatchEvent(new Event('userLogout'));
   };
 
   const value = {

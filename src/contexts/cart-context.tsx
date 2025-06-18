@@ -105,6 +105,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Listen for logout events to immediately clear cart
+  useEffect(() => {
+    const handleLogout = () => {
+      dispatch({ type: 'CLEAR_CART' });
+    };
+
+    window.addEventListener('userLogout', handleLogout);
+    return () => window.removeEventListener('userLogout', handleLogout);
+  }, []);
+
   // Load cart from localStorage when user changes
   useEffect(() => {
     const loadCart = () => {

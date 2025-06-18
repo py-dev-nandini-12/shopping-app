@@ -8,12 +8,12 @@ export default async function Home() {
   const categories = await fetchCategories();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-teal-50 to-emerald-50">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50">
       <Hero />
       
       <section className="container mx-auto px-4 py-20 relative">
         {/* Background decoration */}
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-100/40 via-transparent to-teal-100/40 rounded-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-rose-100/40 via-transparent to-pink-100/40 rounded-3xl"></div>
         <div className="relative">
           <ProductGrid 
             products={featuredProducts} 
@@ -22,15 +22,15 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="bg-gradient-to-br from-teal-100/60 via-cyan-100/40 to-emerald-100/60 py-20 relative overflow-hidden">
+      <section className="bg-gradient-to-br from-pink-100/60 via-rose-100/40 to-purple-100/60 py-20 relative overflow-hidden">
         {/* Background decorative elements */}
-        <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-r from-cyan-300/30 to-teal-300/30 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-10 right-10 w-40 h-40 bg-gradient-to-r from-teal-300/30 to-emerald-300/30 rounded-full blur-3xl"></div>
+        <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-r from-rose-300/30 to-pink-300/30 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-10 right-10 w-40 h-40 bg-gradient-to-r from-pink-300/30 to-purple-300/30 rounded-full blur-3xl"></div>
         
         <div className="container mx-auto px-4 relative">
           <div className="text-center mb-16">
             <h2 className="text-5xl font-black mb-6">
-              <span className="bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-rose-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
                 Shop by Category
               </span>
             </h2>
@@ -44,10 +44,10 @@ export default async function Home() {
               <a
                 key={category.id}
                 href={`/products?category=${category.slug}`}
-                className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/80 to-cyan-100/60 aspect-square hover:shadow-2xl hover:shadow-cyan-500/20 transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 border border-cyan-200/60"
+                className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/80 to-rose-100/60 aspect-square hover:shadow-2xl hover:shadow-rose-500/20 transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 border border-rose-200/60"
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-cyan-800/80 via-teal-800/40 to-transparent z-10" />
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-300/10 via-teal-300/10 to-emerald-300/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-purple-800/80 via-pink-800/40 to-transparent z-10" />
+                <div className="absolute inset-0 bg-gradient-to-br from-rose-300/10 via-pink-300/10 to-purple-300/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="absolute bottom-6 left-6 z-20">
                   <h3 className="text-white font-bold text-xl mb-2 group-hover:text-cyan-200 transition-colors">
                     {category.name}

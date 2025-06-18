@@ -51,28 +51,46 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     items: []
   });
 
+  // Listen for logout events to immediately clear wishlist
+  useEffect(() => {
+    const handleLogout = () => {
+      console.log('Logout event received in wishlist context, clearing wishlist');
+      dispatch({ type: 'CLEAR_WISHLIST' });
+    };
+
+    window.addEventListener('userLogout', handleLogout);
+    return () => window.removeEventListener('userLogout', handleLogout);
+  }, []);
+
   // Load wishlist from localStorage when user changes
   useEffect(() => {
     const loadWishlist = () => {
       try {
         if (typeof window !== 'undefined') {
           const storageKey = user ? `wishlist_${user.id}` : 'wishlist_guest';
+          console.log('Loading wishlist with key:', storageKey, 'User:', user);
           const savedWishlist = localStorage.getItem(storageKey);
+          console.log('Saved wishlist data:', savedWishlist);
           if (savedWishlist) {
             const wishlistData = JSON.parse(savedWishlist);
+            console.log('Parsed wishlist data:', wishlistData);
             dispatch({ type: 'LOAD_WISHLIST', payload: wishlistData });
           } else {
             // Clear wishlist if no data for this user
+            console.log('No wishlist data found, clearing wishlist');
             dispatch({ type: 'CLEAR_WISHLIST' });
           }
         }
       } catch (error) {
         console.error('Error loading wishlist:', error);
+        // Clear wishlist on error
+        dispatch({ type: 'CLEAR_WISHLIST' });
       }
     };
 
+    // Always load wishlist when user changes (including when user becomes null)
     loadWishlist();
-  }, [user]);
+  }, [user]); // This will trigger when user logs out (user becomes null)
 
   // Save wishlist to localStorage whenever state changes
   useEffect(() => {
@@ -80,6 +98,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       try {
         if (typeof window !== 'undefined') {
           const storageKey = user ? `wishlist_${user.id}` : 'wishlist_guest';
+          console.log('Saving wishlist with key:', storageKey, 'State:', state);
           localStorage.setItem(storageKey, JSON.stringify(state));
         }
       } catch (error) {
@@ -87,10 +106,8 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Only save if wishlist has been initialized
-    if (state.items.length > 0) {
-      saveWishlist();
-    }
+    // Always save the state (including empty wishlist)
+    saveWishlist();
   }, [state, user]);
 
   const isInWishlist = (id: string) => {

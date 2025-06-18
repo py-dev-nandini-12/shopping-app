@@ -33,25 +33,25 @@ export const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="text-2xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-700 hover:to-purple-700 transition-all duration-300">
+          <Link href="/" className="text-2xl font-black bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent hover:from-rose-700 hover:to-purple-700 transition-all duration-300">
             ✨ StyleStore
           </Link>
 
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/products" className="text-gray-700 hover:text-indigo-600 transition-colors font-medium px-3 py-2 rounded-lg hover:bg-gray-50">
+            <Link href="/products" className="text-gray-700 hover:text-rose-600 transition-colors font-medium px-3 py-2 rounded-lg hover:bg-gray-50">
               All Products
             </Link>
-            <Link href="/products?category=mens-clothing" className="text-gray-700 hover:text-indigo-600 transition-colors font-medium px-3 py-2 rounded-lg hover:bg-gray-50">
+            <Link href="/products?category=mens-clothing" className="text-gray-700 hover:text-rose-600 transition-colors font-medium px-3 py-2 rounded-lg hover:bg-gray-50">
               Men
             </Link>
-            <Link href="/products?category=womens-clothing" className="text-gray-700 hover:text-indigo-600 transition-colors font-medium px-3 py-2 rounded-lg hover:bg-gray-50">
+            <Link href="/products?category=womens-clothing" className="text-gray-700 hover:text-rose-600 transition-colors font-medium px-3 py-2 rounded-lg hover:bg-gray-50">
               Women
             </Link>
-            <Link href="/products?category=accessories" className="text-gray-700 hover:text-indigo-600 transition-colors font-medium px-3 py-2 rounded-lg hover:bg-gray-50">
+            <Link href="/products?category=accessories" className="text-gray-700 hover:text-rose-600 transition-colors font-medium px-3 py-2 rounded-lg hover:bg-gray-50">
               Accessories
             </Link>
-            <Link href="/products?category=shoes" className="text-gray-700 hover:text-indigo-600 transition-colors font-medium px-3 py-2 rounded-lg hover:bg-gray-50">
+            <Link href="/products?category=shoes" className="text-gray-700 hover:text-rose-600 transition-colors font-medium px-3 py-2 rounded-lg hover:bg-gray-50">
               Shoes
             </Link>
           </nav>
@@ -65,7 +65,7 @@ export const Header = () => {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white placeholder-gray-500 text-gray-900"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-300 bg-white placeholder-gray-500 text-gray-900"
               />
             </form>
           </div>
@@ -73,14 +73,16 @@ export const Header = () => {
           {/* Actions */}
           <div className="flex items-center space-x-3">
             {/* Wishlist */}
-            <Button variant="ghost" size="icon" className="relative hover:bg-gray-100 transition-colors rounded-lg">
-              <Heart className="h-6 w-6 text-gray-600 hover:text-red-500 transition-colors" />
-              {wishlistState.items.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
-                  {wishlistState.items.length}
-                </span>
-              )}
-            </Button>
+            <Link href="/wishlist">
+              <Button variant="ghost" size="icon" className="relative hover:bg-gray-100 transition-colors rounded-lg">
+                <Heart className="h-6 w-6 text-gray-600 hover:text-red-500 transition-colors" />
+                {wishlistState.items.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
+                    {wishlistState.items.length}
+                  </span>
+                )}
+              </Button>
+            </Link>
 
             {/* User Account */}
             {user ? (
@@ -93,16 +95,16 @@ export const Header = () => {
                 onClick={() => setIsAuthModalOpen(true)}
                 disabled={isLoading}
               >
-                <User className="h-6 w-6 text-gray-600 hover:text-indigo-600 transition-colors" />
+                <User className="h-6 w-6 text-gray-600 hover:text-rose-600 transition-colors" />
               </Button>
             )}
 
             {/* Shopping Cart */}
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative hover:bg-gray-100 transition-colors rounded-lg">
-                <ShoppingCart className="h-6 w-6 text-gray-600 hover:text-indigo-600 transition-colors" />
+                <ShoppingCart className="h-6 w-6 text-gray-600 hover:text-rose-600 transition-colors" />
                 {cartState.itemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-indigo-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
+                  <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
                     {cartState.itemCount}
                   </span>
                 )}

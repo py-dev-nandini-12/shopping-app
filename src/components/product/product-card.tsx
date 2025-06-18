@@ -59,15 +59,15 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <div 
-      className="group relative bg-gradient-to-br from-cyan-50 via-teal-50 to-emerald-50 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl hover:shadow-cyan-200/50 transition-all duration-700 overflow-hidden border border-cyan-200/60 hover:border-teal-300/70 transform hover:-translate-y-3 hover:scale-[1.02]"
+      className="group relative bg-gradient-to-br from-rose-50 via-pink-50 to-purple-50 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl hover:shadow-rose-200/50 transition-all duration-700 overflow-hidden border border-rose-200/60 hover:border-pink-300/70 transform hover:-translate-y-3 hover:scale-[1.02]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Animated Background Glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-200/20 via-teal-200/20 to-emerald-200/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-rose-200/20 via-pink-200/20 to-purple-200/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
       
       {/* Product Image Container */}
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-cyan-100/50 to-teal-100/50 rounded-t-3xl">
+      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-rose-100/50 to-pink-100/50 rounded-t-3xl">
         <Link href={`/products/${product.id}`}>
           <Image
             src={product.image}
@@ -84,13 +84,13 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         {/* Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
           {product.featured && (
-            <span className="bg-gradient-to-r from-cyan-400 to-teal-400 text-white text-xs font-bold px-3 py-2 rounded-full shadow-lg flex items-center gap-1">
+            <span className="bg-gradient-to-r from-rose-400 to-pink-400 text-white text-xs font-bold px-3 py-2 rounded-full shadow-lg flex items-center gap-1">
               <Sparkles className="h-3 w-3" />
               Featured
             </span>
           )}
           {discountPercentage > 0 && (
-            <span className="bg-gradient-to-r from-emerald-400 to-green-400 text-white text-xs font-bold px-3 py-2 rounded-full shadow-lg">
+            <span className="bg-gradient-to-r from-purple-400 to-violet-400 text-white text-xs font-bold px-3 py-2 rounded-full shadow-lg">
               -{discountPercentage}% OFF
             </span>
           )}
@@ -106,8 +106,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           onClick={handleToggleWishlist}
           className={`absolute top-4 right-4 p-3 rounded-full transition-all duration-300 shadow-xl backdrop-blur-sm ${
             isInWishlist(product.id)
-              ? 'bg-gradient-to-r from-cyan-400 to-teal-400 text-white transform scale-110'
-              : 'bg-white/90 text-gray-600 hover:bg-cyan-50 hover:text-cyan-500 hover:scale-110'
+              ? 'bg-gradient-to-r from-rose-400 to-pink-400 text-white transform scale-110'
+              : 'bg-white/90 text-gray-600 hover:bg-rose-50 hover:text-rose-500 hover:scale-110'
           }`}
         >
           <Heart 
@@ -122,14 +122,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
         }`}>
           <Link href={`/products/${product.id}`}>
-            <button className="p-3 bg-white/90 text-gray-600 rounded-full hover:bg-cyan-50 hover:text-cyan-600 transition-all duration-300 shadow-xl backdrop-blur-sm hover:scale-110">
+            <button className="p-3 bg-white/90 text-gray-600 rounded-full hover:bg-rose-50 hover:text-rose-600 transition-all duration-300 shadow-xl backdrop-blur-sm hover:scale-110">
               <Eye className="h-5 w-5" />
             </button>
           </Link>
         </div>
 
         {/* Add to Cart Overlay */}
-        <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-cyan-900/90 via-teal-900/50 to-transparent transition-all duration-500 ${
+        <div className={`absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-purple-900/90 via-pink-900/50 to-transparent transition-all duration-500 ${
           isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
         }`}>
           <Button 
@@ -138,7 +138,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             className={`w-full font-bold py-4 rounded-2xl shadow-2xl transition-all duration-300 border-0 text-lg ${
               isAddingToCart 
                 ? 'bg-gradient-to-r from-green-400 to-emerald-400 hover:from-green-500 hover:to-emerald-500 text-white' 
-                : 'bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 hover:from-cyan-600 hover:via-teal-600 hover:to-emerald-600 text-white hover:shadow-cyan-500/50'
+                : 'bg-gradient-to-r from-rose-500 via-pink-500 to-purple-500 hover:from-rose-600 hover:via-pink-600 hover:to-purple-600 text-white hover:shadow-rose-500/50'
             }`}
           >
             {isAddingToCart ? (
@@ -157,10 +157,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </div>
 
       {/* Product Info */}
-      <div className="p-6 space-y-4 bg-gradient-to-br from-white/80 to-cyan-50/60">
+      <div className="p-6 space-y-4 bg-gradient-to-br from-white/80 to-rose-50/60">
         {/* Brand */}
         <div className="flex items-center justify-between">
-          <p className="text-sm font-bold text-cyan-600 uppercase tracking-wider">
+          <p className="text-sm font-bold text-rose-600 uppercase tracking-wider">
             {product.brand}
           </p>
           <div className="flex items-center gap-1">
@@ -173,7 +173,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
         {/* Product Name */}
         <Link href={`/products/${product.id}`}>
-          <h3 className="font-bold text-gray-800 hover:text-cyan-600 transition-colors line-clamp-2 leading-snug text-lg">
+          <h3 className="font-bold text-gray-800 hover:text-rose-600 transition-colors line-clamp-2 leading-snug text-lg">
             {product.name}
           </h3>
         </Link>
@@ -207,7 +207,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               <span className="text-lg text-gray-500 line-through font-medium">
                 ${product.originalPrice}
               </span>
-              <span className="bg-gradient-to-r from-emerald-400 to-green-400 text-white text-xs font-bold px-3 py-1 rounded-full">
+              <span className="bg-gradient-to-r from-purple-400 to-violet-400 text-white text-xs font-bold px-3 py-1 rounded-full">
                 Save ${(product.originalPrice - product.price).toFixed(2)}
               </span>
             </div>
@@ -215,7 +215,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </div>
 
         {/* Available Options */}
-        <div className="flex items-center justify-between pt-3 border-t border-cyan-200/50">
+        <div className="flex items-center justify-between pt-3 border-t border-rose-200/50">
           {/* Colors */}
           {product.colors.length > 0 && (
             <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 {product.colors.slice(0, 3).map((color, index) => (
                   <div
                     key={index}
-                    className="w-5 h-5 rounded-full border-2 border-cyan-200 shadow-sm hover:scale-110 transition-transform cursor-pointer"
+                    className="w-5 h-5 rounded-full border-2 border-rose-200 shadow-sm hover:scale-110 transition-transform cursor-pointer"
                     style={{ 
                       backgroundColor: color.toLowerCase().includes('white') ? '#ffffff' :
                                      color.toLowerCase().includes('black') ? '#000000' :
