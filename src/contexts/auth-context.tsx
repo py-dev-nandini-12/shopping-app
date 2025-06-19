@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { loginUser, registerUser } from '@/app/actions';
+import React, { createContext, useContext, useReducer, useEffect } from "react";
+import { loginUser, registerUser } from "@/app/actions";
 
 // User type
 export interface User {
@@ -23,11 +23,11 @@ interface AuthState {
 
 // Auth actions
 type AuthAction =
-  | { type: 'LOGIN_START' }
-  | { type: 'LOGIN_SUCCESS'; payload: User }
-  | { type: 'LOGIN_FAILURE' }
-  | { type: 'LOGOUT' }
-  | { type: 'LOAD_USER'; payload: User | null };
+  | { type: "LOGIN_START" }
+  | { type: "LOGIN_SUCCESS"; payload: User }
+  | { type: "LOGIN_FAILURE" }
+  | { type: "LOGOUT" }
+  | { type: "LOAD_USER"; payload: User | null };
 
 // Initial state
 const initialState: AuthState = {
@@ -39,33 +39,33 @@ const initialState: AuthState = {
 // Auth reducer
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
-    case 'LOGIN_START':
+    case "LOGIN_START":
       return {
         ...state,
         isLoading: true,
       };
-    case 'LOGIN_SUCCESS':
+    case "LOGIN_SUCCESS":
       return {
         ...state,
         user: action.payload,
         isAuthenticated: true,
         isLoading: false,
       };
-    case 'LOGIN_FAILURE':
+    case "LOGIN_FAILURE":
       return {
         ...state,
         user: null,
         isAuthenticated: false,
         isLoading: false,
       };
-    case 'LOGOUT':
+    case "LOGOUT":
       return {
         ...state,
         user: null,
         isAuthenticated: false,
         isLoading: false,
       };
-    case 'LOAD_USER':
+    case "LOAD_USER":
       return {
         ...state,
         user: action.payload,
@@ -82,44 +82,69 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (
+    username: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  register: (firstName: string, lastName: string, email: string, username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (
+    firstName: string,
+    lastName: string,
+    email: string,
+    username: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Auth provider component
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   // Load user from localStorage on mount
   useEffect(() => {
     const loadUser = () => {
       try {
-        const storedUser = localStorage.getItem('user');
+        const storedUser = localStorage.getItem("user");
         if (storedUser) {
           const user = JSON.parse(storedUser);
-          dispatch({ type: 'LOAD_USER', payload: user });
+          dispatch({ type: "LOAD_USER", payload: user });
         } else {
-          dispatch({ type: 'LOAD_USER', payload: null });
+          dispatch({ type: "LOAD_USER", payload: null });
         }
       } catch (error) {
-        console.error('Error loading user from localStorage:', error);
-        dispatch({ type: 'LOAD_USER', payload: null });
+        console.error("Error loading user from localStorage:", error);
+        dispatch({ type: "LOAD_USER", payload: null });
       }
     };
 
     loadUser();
+
+    // Listen for storage events to sync auth state
+    const handleStorageChange = () => {
+      loadUser();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   // Login function
-  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    dispatch({ type: 'LOGIN_START' });
+  const login = async (
+    username: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    dispatch({ type: "LOGIN_START" });
 
     try {
       const result = await loginUser(username, password);
-      
+
       if (result.user) {
         const user: User = {
           id: result.user.id,
@@ -132,29 +157,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
 
         // Store user in localStorage
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('token', result.user.token);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("token", result.user.token);
 
-        dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+        dispatch({ type: "LOGIN_SUCCESS", payload: user });
         return { success: true };
       } else {
-        dispatch({ type: 'LOGIN_FAILURE' });
-        return { success: false, error: result.error || 'Login failed' };
+        dispatch({ type: "LOGIN_FAILURE" });
+        return { success: false, error: result.error || "Login failed" };
       }
     } catch (error) {
-      console.error('Login error:', error);
-      dispatch({ type: 'LOGIN_FAILURE' });
-      return { success: false, error: 'Network error. Please try again.' };
+      console.error("Login error:", error);
+      dispatch({ type: "LOGIN_FAILURE" });
+      return { success: false, error: "Network error. Please try again." };
     }
   };
 
   // Register function
-  const register = async (firstName: string, lastName: string, email: string, username: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    dispatch({ type: 'LOGIN_START' });
+  const register = async (
+    firstName: string,
+    lastName: string,
+    email: string,
+    username: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    dispatch({ type: "LOGIN_START" });
 
     try {
-      const result = await registerUser(firstName, lastName, email, username, password);
-      
+      const result = await registerUser(
+        firstName,
+        lastName,
+        email,
+        username,
+        password
+      );
+
       if (result.user) {
         const user: User = {
           id: result.user.id!,
@@ -167,30 +204,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
 
         // Store user in localStorage
-        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem("user", JSON.stringify(user));
         if (result.user.token) {
-          localStorage.setItem('token', result.user.token);
+          localStorage.setItem("token", result.user.token);
         }
 
-        dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+        dispatch({ type: "LOGIN_SUCCESS", payload: user });
         return { success: true };
       } else {
-        dispatch({ type: 'LOGIN_FAILURE' });
-        return { success: false, error: result.error || 'Registration failed' };
+        dispatch({ type: "LOGIN_FAILURE" });
+        return { success: false, error: result.error || "Registration failed" };
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      dispatch({ type: 'LOGIN_FAILURE' });
-      return { success: false, error: 'Network error. Please try again.' };
+      console.error("Registration error:", error);
+      dispatch({ type: "LOGIN_FAILURE" });
+      return { success: false, error: "Network error. Please try again." };
     }
   };
 
   // Logout function
   const logout = () => {
     // Remove user data from localStorage
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+
     // Clear user-specific data (cart, wishlist, orders) by setting empty states
     if (state.user) {
       // Clear user-specific cart and wishlist
@@ -198,17 +235,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem(`wishlist_${state.user.id}`);
       localStorage.removeItem(`orders_${state.user.id}`);
     }
-    
+
     // Also clear guest data to ensure clean state
-    localStorage.removeItem('cart_guest');
-    localStorage.removeItem('wishlist_guest');
-    localStorage.removeItem('orders_guest');
-    
-    dispatch({ type: 'LOGOUT' });
-    
+    localStorage.removeItem("cart_guest");
+    localStorage.removeItem("wishlist_guest");
+    localStorage.removeItem("orders_guest");
+
+    dispatch({ type: "LOGOUT" });
+
     // Trigger a custom event to force contexts to reload
-    console.log('Dispatching userLogout event');
-    window.dispatchEvent(new Event('userLogout'));
+    console.log("Dispatching userLogout event");
+    window.dispatchEvent(new Event("userLogout"));
   };
 
   const value = {
@@ -227,7 +264,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

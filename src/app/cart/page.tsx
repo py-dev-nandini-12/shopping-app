@@ -50,7 +50,7 @@ export default function CartPage() {
         <Button 
           variant="outline" 
           onClick={handleClearCart}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 transition-all duration-300 shadow-sm hover:shadow-md"
         >
           Clear Cart
         </Button>
@@ -187,7 +187,7 @@ export default function CartPage() {
               </Link>
               
               <Link href="/products">
-                <Button variant="outline" className="w-full py-3">
+                <Button variant="outline" className="w-full py-3 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border-gray-300 text-gray-700 hover:text-gray-800 font-medium transition-all duration-300 shadow-sm hover:shadow-md">
                   Continue Shopping
                 </Button>
               </Link>

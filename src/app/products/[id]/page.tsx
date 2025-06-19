@@ -162,13 +162,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 {product.inStock ? 'Add to Cart' : 'Out of Stock'}
               </Button>
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border-gray-300 text-gray-700 hover:text-gray-800 font-medium transition-all duration-300 shadow-sm hover:shadow-md">
                 <Heart className="h-5 w-5" />
               </Button>
             </div>
             
             {product.inStock && (
-              <Button variant="outline" className="w-full" size="lg">
+              <Button variant="outline" className="w-full bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border-emerald-300 text-emerald-700 hover:text-emerald-800 font-semibold transition-all duration-300 shadow-sm hover:shadow-md" size="lg">
                 Buy Now
               </Button>
             )}

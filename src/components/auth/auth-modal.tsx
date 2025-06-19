@@ -75,11 +75,14 @@ export const AuthModal = ({
         localStorage.setItem("token", currentState.user.token || "");
       }
 
-      // Update auth context
-      login(currentState.user, currentState.user.password);
+      // Update auth context by triggering a re-render
+      // The auth context will pick up the user from localStorage
+      window.dispatchEvent(new Event("storage"));
 
-      // Close modal
-      onClose();
+      // Close modal after a short delay to allow state updates
+      setTimeout(() => {
+        onClose();
+      }, 100);
     }
   }, [
     currentState.success,
