@@ -27,7 +27,7 @@ const features = [
     icon: CreditCard,
     title: "Server Actions Checkout",
     description: "React 19 useActionState for seamless checkout flow",
-    path: "/checkout-optimized",
+    path: "/checkout",
     color: "from-purple-500 to-pink-500"
   },
   {
@@ -211,7 +211,7 @@ export default function React19Demo() {
                 View Cart
               </Button>
             </Link>
-            <Link href="/checkout-optimized">
+            <Link href="/checkout">
               <Button variant="outline" className="bg-white hover:bg-cyan-50 border-cyan-200">
                 Try Checkout
               </Button>
