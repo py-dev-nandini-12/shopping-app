@@ -1,20 +1,5 @@
 "use server";
 
-interface CheckoutFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  cardNumber: string;
-  expiryDate: string;
-  cvv: string;
-  nameOnCard: string;
-}
-
 interface CheckoutState {
   success: boolean;
   error?: string;
@@ -29,7 +14,7 @@ export async function processCheckoutAction(
   const step = parseInt(formData.get("step") as string) || 1;
 
   // Simulate processing delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   if (step === 1) {
     // Validate shipping information
@@ -67,9 +52,43 @@ export async function processCheckoutAction(
       };
     }
 
+    // Validate expiry date format
+    if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
+      return {
+        success: false,
+        error: "Please enter expiry date in MM/YY format",
+        step: 2,
+      };
+    }
+
+    const [month, year] = expiryDate.split("/");
+    const currentYear = new Date().getFullYear() % 100;
+    const currentMonth = new Date().getMonth() + 1;
+
+    if (parseInt(month) < 1 || parseInt(month) > 12) {
+      return {
+        success: false,
+        error: "Please enter a valid month (01-12)",
+        step: 2,
+      };
+    }
+
+    if (
+      parseInt(year) < currentYear ||
+      (parseInt(year) === currentYear && parseInt(month) < currentMonth)
+    ) {
+      return {
+        success: false,
+        error: "Card has expired",
+        step: 2,
+      };
+    }
+
     // Simulate payment processing
-    const orderId = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+    const orderId = `ORDER-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+
     return {
       success: true,
       orderId,
@@ -91,13 +110,20 @@ export async function validateShippingAction(
   const firstName = formData.get("firstName") as string;
   const lastName = formData.get("lastName") as string;
   const email = formData.get("email") as string;
-  const phone = formData.get("phone") as string;
   const address = formData.get("address") as string;
   const city = formData.get("city") as string;
   const state = formData.get("state") as string;
   const zipCode = formData.get("zipCode") as string;
 
-  if (!firstName || !lastName || !email || !address || !city || !state || !zipCode) {
+  if (
+    !firstName ||
+    !lastName ||
+    !email ||
+    !address ||
+    !city ||
+    !state ||
+    !zipCode
+  ) {
     return {
       success: false,
       error: "Please fill in all required fields",
@@ -136,27 +162,71 @@ export async function validatePaymentAction(
     };
   }
 
-  if (cardNumber.replace(/\s/g, '').length < 16) {
+  // Clean and validate card number
+  const cleanCardNumber = cardNumber.replace(/\s/g, "");
+  if (cleanCardNumber.length < 13 || cleanCardNumber.length > 19) {
     return {
       success: false,
-      error: "Please enter a valid card number",
+      error: "Please enter a valid card number (13-19 digits)",
       step: 2,
     };
   }
 
-  if (cvv.length < 3) {
+  if (!/^\d+$/.test(cleanCardNumber)) {
     return {
       success: false,
-      error: "Please enter a valid CVV",
+      error: "Card number should contain only digits",
+      step: 2,
+    };
+  }
+
+  if (cvv.length < 3 || cvv.length > 4) {
+    return {
+      success: false,
+      error: "Please enter a valid CVV (3-4 digits)",
+      step: 2,
+    };
+  }
+
+  // Validate expiry date format
+  if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
+    return {
+      success: false,
+      error: "Please enter expiry date in MM/YY format",
+      step: 2,
+    };
+  }
+
+  const [month, year] = expiryDate.split("/");
+  const currentYear = new Date().getFullYear() % 100;
+  const currentMonth = new Date().getMonth() + 1;
+
+  if (parseInt(month) < 1 || parseInt(month) > 12) {
+    return {
+      success: false,
+      error: "Please enter a valid month (01-12)",
+      step: 2,
+    };
+  }
+
+  if (
+    parseInt(year) < currentYear ||
+    (parseInt(year) === currentYear && parseInt(month) < currentMonth)
+  ) {
+    return {
+      success: false,
+      error: "Card has expired",
       step: 2,
     };
   }
 
   // Simulate payment processing
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  const orderId = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  const orderId = `ORDER-${Date.now()}-${Math.random()
+    .toString(36)
+    .substr(2, 9)}`;
+
   return {
     success: true,
     orderId,

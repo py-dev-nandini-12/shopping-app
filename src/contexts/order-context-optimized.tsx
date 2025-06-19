@@ -127,6 +127,8 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Error loading orders:', error);
+        dispatch({ type: 'LOAD_ORDERS', payload: [] });
+      } finally {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
@@ -197,6 +199,46 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   const getOrderById = useCallback((id: string): Order | undefined => {
     return optimisticState.orders.find(order => order.id === id);
   }, [optimisticState.orders]);
+
+  // Function to check and update order statuses based on age
+  const checkAndUpdateOrderStatuses = useCallback(() => {
+    if (!user) return;
+    
+    const now = new Date();
+    const updatedOrders = state.orders.map(order => {
+      // If order is processing and was created more than 30 seconds ago, mark as delivered
+      if (order.status === 'processing' && order.createdAt) {
+        const timeDiff = now.getTime() - order.createdAt.getTime();
+        const thirtySecondsInMs = 30 * 1000; // 30 seconds
+        
+        if (timeDiff > thirtySecondsInMs) {
+          return { ...order, status: 'delivered' as const };
+        }
+      }
+      return order;
+    });
+
+    // Check if any orders were updated
+    const hasUpdates = updatedOrders.some((order, index) => 
+      order.status !== state.orders[index]?.status
+    );
+
+    if (hasUpdates) {
+      dispatch({ type: 'LOAD_ORDERS', payload: updatedOrders });
+    }
+  }, [state.orders, user]);
+
+  // Set up interval to check order statuses every 5 seconds
+  useEffect(() => {
+    if (user && state.orders.length > 0) {
+      const interval = setInterval(checkAndUpdateOrderStatuses, 5000);
+      
+      // Also check immediately
+      checkAndUpdateOrderStatuses();
+      
+      return () => clearInterval(interval);
+    }
+  }, [user, state.orders.length, checkAndUpdateOrderStatuses]);
 
   return (
     <OrderContext.Provider

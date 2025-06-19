@@ -5,9 +5,11 @@ import React, {
   useActionState,
   useOptimistic,
   startTransition,
+  useEffect,
 } from "react";
 import { useCart } from "@/contexts/cart-context";
 import { useAuth } from "@/contexts/auth-context";
+import { useOrders } from "@/contexts/order-context-optimized";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -26,21 +28,12 @@ import Image from "next/image";
 import {
   validateShippingAction,
   validatePaymentAction,
-} from "@/app/checkout-actions";
-
-import type { CartItem } from "@/types/cart";
-
-interface OrderSummary {
-  orderId: string;
-  items: CartItem[];
-  total: number;
-  status: "completed";
-  timestamp: Date;
-}
+} from "./checkout-actions";
 
 export function CheckoutClient() {
   const { optimisticState: cartState, clearCartOptimistic } = useCart();
   const { user } = useAuth();
+  const { addOrder } = useOrders();
   const [currentStep, setCurrentStep] = useState(1);
 
   // React 19 useActionState for shipping validation
@@ -67,6 +60,43 @@ export function CheckoutClient() {
     (current, newValue: boolean) => newValue
   );
 
+  // Card number and expiry date formatting helpers
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
+    const matches = v.match(/\d{4,16}/g);
+    const match = (matches && matches[0]) || "";
+    const parts = [];
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+    if (parts.length) {
+      return parts.join(" ");
+    } else {
+      return v;
+    }
+  };
+
+  const formatExpiryDate = (value: string) => {
+    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
+    if (v.length >= 2) {
+      return v.substring(0, 2) + "/" + v.substring(2, 4);
+    }
+    return v;
+  };
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.target.value = formatCardNumber(e.target.value);
+  };
+
+  const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.target.value = formatExpiryDate(e.target.value);
+  };
+
+  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, "").substring(0, 4);
+    e.target.value = value;
+  };
+
   // Handle successful shipping validation
   React.useEffect(() => {
     if (shippingState.success && shippingState.step === 2) {
@@ -75,44 +105,49 @@ export function CheckoutClient() {
   }, [shippingState.success, shippingState.step]);
 
   // Handle successful payment and order completion
-  React.useEffect(() => {
-    if (paymentState.success && paymentState.orderId) {
-      // Optimistically update UI
-      startTransition(() => {
-        setOrderComplete(true);
-      });
-
-      // Create order summary
-      const orderSummary: OrderSummary = {
-        orderId: paymentState.orderId,
+  useEffect(() => {
+    if (paymentState.success && paymentState.orderId && user && cartState.items.length > 0) {
+      // Create order using the order context
+      const orderData = {
+        userId: user.id?.toString() || "",
         items: cartState.items,
         total: cartState.total,
-        status: "completed",
-        timestamp: new Date(),
+        status: "processing" as const,
+        shippingAddress: {
+          firstName: user.firstName || "",
+          lastName: user.lastName || "",
+          email: user.email || "",
+          phone: "",
+          address: "",
+          city: "",
+          state: "",
+          zipCode: "",
+        },
+        paymentMethod: {
+          cardNumber: "**** **** **** ****",
+          expiryDate: "",
+          nameOnCard: "",
+        },
       };
 
-      // Save order to localStorage
-      if (typeof window !== "undefined") {
-        const existingOrders = JSON.parse(
-          localStorage.getItem("orders") || "[]"
-        );
-        existingOrders.push(orderSummary);
-        localStorage.setItem("orders", JSON.stringify(existingOrders));
-      }
-
-      // Clear cart
-      clearCartOptimistic();
-      setCurrentStep(3);
+      // Add order through context (this will handle localStorage)
+      addOrder(orderData).then(() => {
+        // Complete the order first, then clear cart
+        startTransition(() => {
+          setOrderComplete(true);
+        });
+        setCurrentStep(3);
+        
+        // Clear cart after order completion
+        clearCartOptimistic();
+      }).catch((error) => {
+        console.error("Error creating order:", error);
+      });
     }
-  }, [
-    paymentState.success,
-    paymentState.orderId,
-    cartState,
-    clearCartOptimistic,
-    setOrderComplete,
-  ]);
+  }, [paymentState, cartState.items, cartState.total, clearCartOptimistic, setOrderComplete, user, addOrder]);
 
-  if (cartState.items.length === 0 && !orderComplete) {
+  // Show empty cart only if cart is empty AND order is not complete
+  if (cartState.items.length === 0 && !orderComplete && currentStep !== 3) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-rose-50 to-purple-50 py-12">
         <div className="container mx-auto px-4 max-w-2xl">
@@ -170,9 +205,9 @@ export function CheckoutClient() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className={`grid gap-8 ${(currentStep === 3 || orderComplete) ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-3'}`}>
           {/* Main Content */}
-          <div className="lg:col-span-2">
+          <div className={(currentStep === 3 || orderComplete) ? 'w-full max-w-2xl mx-auto' : 'lg:col-span-2'}>
             {currentStep === 1 && (
               <Card className="bg-white shadow-xl border-0">
                 <CardHeader>
@@ -323,7 +358,9 @@ export function CheckoutClient() {
                       <input
                         type="text"
                         name="cardNumber"
-                        placeholder="Card Number"
+                        placeholder="1234 5678 9012 3456"
+                        maxLength={19}
+                        onChange={handleCardNumberChange}
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-300 bg-white text-black placeholder-gray-700 font-semibold"
                         required
                       />
@@ -334,6 +371,8 @@ export function CheckoutClient() {
                         type="text"
                         name="expiryDate"
                         placeholder="MM/YY"
+                        maxLength={5}
+                        onChange={handleExpiryDateChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-300 bg-white text-black placeholder-gray-700 font-semibold"
                         required
                       />
@@ -342,7 +381,9 @@ export function CheckoutClient() {
                         <input
                           type="text"
                           name="cvv"
-                          placeholder="CVV"
+                          placeholder="123"
+                          maxLength={4}
+                          onChange={handleCvvChange}
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all duration-300 bg-white text-black placeholder-gray-700 font-semibold"
                           required
                         />
@@ -385,7 +426,7 @@ export function CheckoutClient() {
               </Card>
             )}
 
-            {currentStep === 3 && (
+            {(currentStep === 3 || orderComplete) && (
               <Card className="bg-white shadow-xl border-0">
                 <CardContent className="p-12 text-center">
                   <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -425,72 +466,74 @@ export function CheckoutClient() {
             )}
           </div>
 
-          {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <Card className="bg-white shadow-xl border-0 sticky top-4">
-              <CardHeader>
-                <CardTitle className="text-xl font-black text-black">
-                  Order Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {cartState.items.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3">
-                      <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
-                        <Image
-                          src={item.product.image}
-                          alt={item.product.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-black truncate">
-                          {item.product.name}
+          {/* Order Summary - Only show when not completed */}
+          {currentStep !== 3 && !orderComplete && (
+            <div className="lg:col-span-1">
+              <Card className="bg-white shadow-xl border-0 sticky top-4">
+                <CardHeader>
+                  <CardTitle className="text-xl font-black text-black">
+                    Order Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {cartState.items.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3">
+                        <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
+                          <Image
+                            src={item.product.image}
+                            alt={item.product.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-black text-black truncate">
+                            {item.product.name}
+                          </p>
+                          <p className="text-sm text-black font-bold">
+                            Qty: {item.quantity}
+                          </p>
+                        </div>
+                        <p className="text-sm font-black text-black">
+                          ${(item.product.price * item.quantity).toFixed(2)}
                         </p>
-                        <p className="text-sm text-black font-bold">
-                          Qty: {item.quantity}
-                        </p>
                       </div>
-                      <p className="text-sm font-black text-black">
-                        ${(item.product.price * item.quantity).toFixed(2)}
-                      </p>
-                    </div>
-                  ))}
+                    ))}
 
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-black font-bold">Subtotal:</span>
-                      <span className="font-black text-black">
-                        ${cartState.total.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-black font-bold">Shipping:</span>
-                      <span className="font-black text-green-700">Free</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-black font-bold">Tax:</span>
-                      <span className="font-black text-black">
-                        ${(cartState.total * 0.08).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="border-t mt-2 pt-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xl font-black text-black">
-                          Total:
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-black font-bold">Subtotal:</span>
+                        <span className="font-black text-black">
+                          ${cartState.total.toFixed(2)}
                         </span>
-                        <span className="text-xl font-black bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
-                          ${(cartState.total * 1.08).toFixed(2)}
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-black font-bold">Shipping:</span>
+                        <span className="font-black text-green-700">Free</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-black font-bold">Tax:</span>
+                        <span className="font-black text-black">
+                          ${(cartState.total * 0.08).toFixed(2)}
                         </span>
+                      </div>
+                      <div className="border-t mt-2 pt-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xl font-black text-black">
+                            Total:
+                          </span>
+                          <span className="text-xl font-black bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
+                            ${(cartState.total * 1.08).toFixed(2)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
     </div>
