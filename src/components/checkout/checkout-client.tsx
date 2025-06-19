@@ -6,6 +6,7 @@ import React, {
   useOptimistic,
   startTransition,
   useEffect,
+  useRef,
 } from "react";
 import { useCart } from "@/contexts/cart-context";
 import { useAuth } from "@/contexts/auth-context";
@@ -35,6 +36,7 @@ export function CheckoutClient() {
   const { user } = useAuth();
   const { addOrder } = useOrders();
   const [currentStep, setCurrentStep] = useState(1);
+  const orderProcessedRef = useRef(false);
 
   // React 19 useActionState for shipping validation
   const [shippingState, shippingAction, isShippingPending] = useActionState(
@@ -106,7 +108,16 @@ export function CheckoutClient() {
 
   // Handle successful payment and order completion
   useEffect(() => {
-    if (paymentState.success && paymentState.orderId && user && cartState.items.length > 0) {
+    if (paymentState.success && paymentState.orderId && user && !orderProcessedRef.current) {
+      // Mark as processed to prevent multiple executions
+      orderProcessedRef.current = true;
+      
+      // Immediately set order complete and step 3 to prevent UI flickering
+      startTransition(() => {
+        setOrderComplete(true);
+      });
+      setCurrentStep(3);
+
       // Create order using the order context
       const orderData = {
         userId: user.id?.toString() || "",
@@ -130,24 +141,31 @@ export function CheckoutClient() {
         },
       };
 
-      // Add order through context (this will handle localStorage)
+      // Add order through context and clear cart
       addOrder(orderData).then(() => {
-        // Complete the order first, then clear cart
-        startTransition(() => {
-          setOrderComplete(true);
-        });
-        setCurrentStep(3);
-        
-        // Clear cart after order completion
+        // Clear cart after order is saved
         clearCartOptimistic();
       }).catch((error) => {
         console.error("Error creating order:", error);
+        // Reset if there's an error
+        orderProcessedRef.current = false;
+        setCurrentStep(2);
+        startTransition(() => {
+          setOrderComplete(false);
+        });
       });
     }
-  }, [paymentState, cartState.items, cartState.total, clearCartOptimistic, setOrderComplete, user, addOrder]);
+  }, [paymentState, user, addOrder, clearCartOptimistic, setOrderComplete, cartState.items, cartState.total]);
 
-  // Show empty cart only if cart is empty AND order is not complete
-  if (cartState.items.length === 0 && !orderComplete && currentStep !== 3) {
+  // Reset order processed flag when starting checkout process
+  useEffect(() => {
+    if (currentStep === 1) {
+      orderProcessedRef.current = false;
+    }
+  }, [currentStep]);
+
+  // Show empty cart only if cart is empty AND order is not complete AND we're not on completion step
+  if (cartState.items.length === 0 && !orderComplete && currentStep < 3 && !orderProcessedRef.current) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-rose-50 to-purple-50 py-12">
         <div className="container mx-auto px-4 max-w-2xl">
