@@ -249,11 +249,12 @@ export default function OrdersPage() {
                           Payment Method
                         </h5>
                         <p className="text-gray-600">
-                          {"type" in order.paymentMethod
+                          {order.paymentMethod && "type" in order.paymentMethod
                             ? (order.paymentMethod.type === "credit"
                                 ? "Credit"
                                 : "Debit") +
-                              (order.paymentMethod.last4
+                              ("last4" in order.paymentMethod &&
+                              order.paymentMethod.last4
                                 ? ` Card ending in ${order.paymentMethod.last4}`
                                 : " Card")
                             : "Card"}

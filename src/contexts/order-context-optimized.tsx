@@ -11,6 +11,7 @@ export interface Order {
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: Date;
+  orderDate: string;
   shippingAddress?: {
     firstName: string;
     lastName: string;
@@ -43,7 +44,7 @@ type OrderAction =
 const OrderContext = createContext<{
   state: OrderState;
   optimisticState: OrderState;
-  addOrder: (order: Omit<Order, 'id' | 'createdAt'>) => Promise<string>;
+  addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'orderDate'>) => Promise<string>;
   updateOrderStatus: (id: string, status: Order['status']) => void;
   cancelOrder: (id: string) => void;
   getOrderById: (id: string) => Order | undefined;
@@ -155,12 +156,14 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('userLogout', handleLogout);
   }, []);
 
-  const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'createdAt'>): Promise<string> => {
+  const addOrder = useCallback(async (orderData: Omit<Order, 'id' | 'createdAt' | 'orderDate'>): Promise<string> => {
     const orderId = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const currentDate = new Date();
     const order: Order = {
       ...orderData,
       id: orderId,
-      createdAt: new Date(),
+      createdAt: currentDate,
+      orderDate: currentDate.toISOString(),
     };
 
     // Optimistic update

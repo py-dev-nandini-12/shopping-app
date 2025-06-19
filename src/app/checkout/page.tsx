@@ -1,5 +1,5 @@
-import { CheckoutPageClient } from './checkout-client';
-import { AuthGuard } from '@/components/auth/auth-guard';
+import { AuthGuard } from "@/components/auth/auth-guard";
+import { CheckoutPageClient } from "./checkout-client";
 
 export default function CheckoutPage() {
   return (
@@ -7,4 +7,4 @@ export default function CheckoutPage() {
       <CheckoutPageClient />
     </AuthGuard>
   );
-
+}
